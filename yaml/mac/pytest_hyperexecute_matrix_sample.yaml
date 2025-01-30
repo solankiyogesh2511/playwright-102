@@ -1,0 +1,49 @@
+---
+version: 0.1
+globalTimeout: 90
+testSuiteTimeout: 90
+testSuiteStep: 90
+
+matrix:
+  files: ["tests/test__Scenario1.py", "tests/test__Scenario2.py", "tests/test__Scenario3.py"]
+
+runson: mac
+retryOnFailure: true
+
+maxRetries: 1
+
+env:
+#  PAT: ${{ .secrets.testKey }}
+  TARGET_OS: MacOS Catalina
+
+# Dependency caching for Windows
+cacheKey: '{{ checksum "requirements.txt" }}'
+cacheDirectories:
+  - CacheDir
+pre:
+  - pip install py
+  - pip3 install -r requirements.txt --cache-dir CacheDir
+post:
+  - cat yaml/mac/pytest_hyperexecute_matrix_sample.yaml
+
+runtime:
+  language: python
+  version: "3"
+
+mergeArtifacts: true
+
+uploadArtefacts:
+  - name: TestReports
+    path:
+    - reports/**
+
+report: true
+partialReports:
+    type: json
+    location: reports/
+    frameworkName: extent
+
+testSuites:
+  - python3 -m pytest -s --verbose --html=reports/report.html $files
+
+jobLabel: [playwright-pytest, mac, matrix]

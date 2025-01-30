@@ -1,0 +1,52 @@
+---
+version: 0.1
+globalTimeout: 90
+testSuiteTimeout: 90
+testSuiteStep: 90
+
+runson: mac
+
+autosplit: true
+retryOnFailure: true
+
+maxRetries: 1
+concurrency: 2
+
+env:
+#  PAT: ${{ .secrets.testKey }}
+  TARGET_OS: MacOS Catalina
+
+# Dependency caching for Windows
+cacheKey: '{{ checksum "requirements.txt" }}'
+cacheDirectories:
+  - CacheDir
+pre:
+  - pip install py
+  - pip3 install -r requirements.txt --cache-dir CacheDir
+post:
+  - cat yaml/mac/pytest_hyperexecute_autosplit_sample.yaml
+
+runtime:
+  language: python
+  version: "3"
+
+mergeArtifacts: true
+uploadArtefacts:
+  - name: TestReports
+    path:
+    - reports/**
+
+report: true
+partialReports:
+    type: json
+    location: reports/
+    frameworkName: extent
+
+testDiscovery:
+  type: raw
+  mode: dynamic
+  command: grep -nri 'class' tests -ir --include=\*.py | sed 's/:.*//'
+
+testRunnerCommand: python3 -m pytest -s  --verbose --html=reports/report.html $test
+
+jobLabel: [playwright-pytest, mac, autosplit]
